@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Список фильмов</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        
+        form {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        form label {
+            display: block;
+            margin-bottom: 10px;
+        }
+        
+        form input[type="text"],
+        form input[type="number"],
+        form select {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        
+        form button {
+            background: black;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+        }
+        
+        form button:hover {
+            background: #444;
+        }
+        
+        .filter-container {
+            background: white;
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            display: flex;
+            gap: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .filter-container input,
+        .filter-container select {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        
+        .filter-container button {
+            background: red;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        table th,
+        table td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+        
+        table th {
+            background: black;
+            color: white;
+        }
+        
+        .actions button {
+            background: red;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .actions button:hover {
+            background: darkred;
+        }
+    </style>
+</head>
+
+<body>
+    <form id="movieForm">
+        <input type="hidden" id="editIndex" value="-1">
+        <label>
+            Название:
+            <br><br>
+            <input type="text" id="title">
+        </label>
+        <label>
+            Жанр:
+            <br><br>
+            <input type="text" id="genre">
+        </label>
+        <label>
+            Год:
+            <br><br>
+            <input type="number" id="year">
+        </label>
+        <label>
+            <input type="checkbox" id="watched">
+            Успели посмотреть?
+        </label>
+        <button type="submit">submit</button>
+    </form>
+
+    <div class="filter-container">
+        <input type="text" id="filterTitle" placeholder="Название фильма">
+        <input type="text" id="filterGenre" placeholder="Жанр">
+        <input type="number" id="filterYear" placeholder="Год релиза">
+        <select id="filterWatched">
+            <option value="Все">Все</option>
+            <option value="Да">Да</option>
+            <option value="Нет">Нет</option>
+        </select>
+        <button id="applyFilters">Применить фильтры</button>
+        <button id="deleteAllButton">Удалить всё</button>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Название</th>
+                <th>Жанр</th>
+                <th>Год</th>
+                <th>Успели посмотреть?</th>
+                <th>Действие</th>
+            </tr>
+        </thead>
+        <tbody id="movieTable">
+        </tbody>
+    </table>
+
+    <script>
+        const movieForm = document.getElementById('movieForm');
+        const movieTable = document.getElementById('movieTable');
+        const deleteAllButton = document.getElementById('deleteAllButton');
+        const applyFiltersButton = document.getElementById('applyFilters');
+        const filterTitle = document.getElementById('filterTitle');
+        const filterGenre = document.getElementById('filterGenre');
+        const filterYear = document.getElementById('filterYear');
+        const filterWatched = document.getElementById('filterWatched');
+        let movies = [];
+
+        const renderMovies = (filteredMovies = movies) => {
+            movieTable.innerHTML = filteredMovies.map((movie, index) => `
+                <tr>
+                    <td>${movie.title}</td>
+                    <td>${movie.genre}</td>
+                    <td>${movie.year}</td>
+                    <td>${movie.watched ? 'Да' : 'Нет'}</td>
+                    <td class="actions">
+                        <button onclick="deleteMovie(${index})">Удалить</button>
+                    </td>
+                </tr>
+            `).join('');
+        };
+
+        const deleteMovie = (index) => {
+            movies.splice(index, 1);
+            renderMovies();
+        };
+
+        const applyFilters = () => {
+            const title = filterTitle.value.toLowerCase();
+            const genre = filterGenre.value.toLowerCase();
+            const year = filterYear.value;
+            const watched = filterWatched.value;
+
+            const filteredMovies = movies.filter(movie => {
+                const matchesTitle = title ? movie.title.toLowerCase().includes(title) : true;
+                const matchesGenre = genre ? movie.genre.toLowerCase().includes(genre) : true;
+                const matchesYear = year ? movie.year === Number(year) : true;
+                const matchesWatched = watched === 'Все' ? true : movie.watched === (watched === 'Да');
+
+                return matchesTitle && matchesGenre && matchesYear && matchesWatched;
+            });
+
+            renderMovies(filteredMovies);
+        };
+
+        deleteAllButton.addEventListener('click', () => {
+            if (confirm("Вы уверены, что хотите удалить все фильмы?")) {
+                movies = [];
+                renderMovies();
+            }
+        });
+
+        movieForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const title = document.getElementById('title').value.trim();
+            const genre = document.getElementById('genre').value.trim();
+            const year = document.getElementById('year').value;
+            const watched = document.getElementById('watched').checked;
+
+            if (!title || !genre || !year) {
+                alert("Пожалуйста, заполните все поля!");
+                return;
+            }
+
+            movies.push({
+                title,
+                genre,
+                year: Number(year),
+                watched
+            });
+
+            renderMovies();
+            movieForm.reset();
+        });
+
+        applyFiltersButton.addEventListener('click', applyFilters);
+
+        renderMovies();
+    </script>
+</body>
+
+</html>
